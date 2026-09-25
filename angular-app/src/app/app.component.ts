@@ -87,7 +87,15 @@ export class AppComponent implements OnInit, OnDestroy {
   private restoreCart() {
     try { this.cart = JSON.parse(localStorage.getItem(`smach-angular-cart-${this.tableNumber || 'public'}`) || '[]'); } catch { this.cart = []; }
   }
-  openCheckout() { if (!this.tableNumber || !this.tableToken) { this.formError = 'Este menú debe abrirse desde el QR de una mesa.'; return; } this.cartOpen = false; this.checkoutOpen = true; }
+  openCheckout() {
+    this.formError = '';
+    if (!this.tableNumber || !this.tableToken) {
+      this.formError = 'Para confirmar, abre el menú escaneando el QR de una mesa.';
+      return;
+    }
+    this.cartOpen = false;
+    this.checkoutOpen = true;
+  }
   async submitOrder() {
     this.formError = '';
     if (!this.customerName.trim()) { this.formError = 'Ingresa tu nombre para continuar.'; return; }
