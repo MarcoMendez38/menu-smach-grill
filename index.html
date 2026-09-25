@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Menú digital de Smach & Grill, cocina casera y productos frescos." />
+    <title>Smach & Grill | Menú digital</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#contenido">Saltar al contenido principal</a>
+    <header class="site-header">
+      <div class="container header-inner">
+        <a class="brand" href="#" aria-label="Smach y Grill, inicio">
+          <span class="brand-mark" aria-hidden="true">B<span>&</span>M</span>
+          <span class="brand-name">Smach <em>&</em> Grill</span>
+        </a>
+        <div class="header-actions">
+          <button class="icon-button" type="button" id="open-cart" aria-label="Abrir pedido" aria-controls="cart-panel">
+            <span aria-hidden="true">🛒</span>
+            <span class="cart-count" id="cart-count">0</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main id="contenido">
+      <section class="hero">
+        <div class="container hero-content">
+          <div class="language-switcher" role="group" aria-label="Seleccionar idioma">
+            <button type="button" class="language-button active" data-language="es">ES</button>
+            <button type="button" class="language-button" data-language="pt">PT</button>
+            <button type="button" class="language-button" data-language="en">EN</button>
+          </div>
+          <p class="eyebrow" data-i18n="eyebrow">Hamburguesas a la parrilla · Sabor sin vueltas</p>
+          <h1 data-i18n="heroTitle">Hamburguesas<br /><span>que dejan huella.</span></h1>
+          <p class="hero-copy" data-i18n="heroCopy">Pan dorado, carne jugosa y combinaciones llenas de sabor. Elegí tu favorita y disfrutá.</p>
+          <a class="button button-primary" href="#menu" data-i18n="viewMenu">Ver el menú <span aria-hidden="true">↓</span></a>
+        </div>
+        <div class="hero-decoration" aria-hidden="true">
+          <div class="sun"></div>
+          <div class="leaf leaf-one"></div>
+          <div class="leaf leaf-two"></div>
+          <div class="plate"><span></span></div>
+        </div>
+      </section>
+
+      <section class="menu-section container" id="menu" aria-labelledby="menu-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow" data-i18n="chooseMoment">Elegí tu momento</p>
+            <h2 id="menu-title" data-i18n="ourMenu">Nuestro menú</h2>
+          </div>
+          <div class="search-wrap">
+            <label for="search" class="sr-only">Buscar en el menú</label>
+            <span aria-hidden="true">⌕</span>
+            <input id="search" type="search" placeholder="Buscar plato..." data-i18n-placeholder="search" autocomplete="off" />
+          </div>
+        </div>
+
+        <nav class="category-nav" aria-label="Categorías del menú" id="categories"></nav>
+        <p class="result-message" id="result-message" role="status" aria-live="polite"></p>
+        <div class="menu-grid" id="menu-grid"></div>
+      </section>
+
+      <section class="info-strip" aria-label="Información del restaurante">
+        <div class="container info-grid">
+          <div class="info-item"><span class="info-icon" aria-hidden="true">✦</span><div><strong data-i18n="fresh">Productos frescos</strong><span data-i18n="freshSub">Seleccionados cada día</span></div></div>
+          <div class="info-item"><span class="info-icon" aria-hidden="true">◷</span><div><strong data-i18n="openToday">Abierto hoy</strong><span>12:00 — 23:30 hs</span></div></div>
+          <div class="info-item"><span class="info-icon" aria-hidden="true">⌁</span><div><strong data-i18n="options">Opciones para todos</strong><span data-i18n="optionsSub">Vegetarianas y sin TACC</span></div></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div><span class="footer-brand">Smach <em>&</em> Grill</span><p data-i18n="footer">Desarrollado por Jorge Paez, Patricio Chandia y Marco Mendez.</p></div>
+      </div>
+    </footer>
+
+    <div class="overlay" id="overlay" hidden></div>
+    <aside class="cart-panel" id="cart-panel" aria-labelledby="cart-title" aria-hidden="true">
+      <div class="cart-header"><div><p class="eyebrow">Tu selección</p><h2 id="cart-title">Tu pedido</h2></div><button class="close-button" id="close-cart" type="button" aria-label="Cerrar pedido">×</button></div>
+      <div class="cart-content" id="cart-content"><div class="empty-cart"><span aria-hidden="true">🍽️</span><h3>Tu pedido está vacío</h3><p>Sumá algo rico para empezar.</p></div></div>
+      <div class="cart-footer" id="cart-footer" hidden><div class="total-row"><span data-i18n="total">Total</span><strong id="cart-total">$0</strong></div><button class="button button-primary checkout-button" id="checkout" type="button" data-i18n="checkout">Confirmar pedido <span aria-hidden="true">→</span></button><p class="small-note" data-i18n="checkoutNote">Al confirmar, te contactaremos para coordinar el pago.</p></div>
+    </aside>
+    <div class="checkout-dialog" id="checkout-dialog" hidden>
+      <div class="dialog-card" role="dialog" aria-modal="true" aria-labelledby="checkout-title">
+        <button class="close-button dialog-close" id="close-dialog" type="button" aria-label="Cerrar formulario">×</button>
+        <p class="eyebrow">Último paso</p><h2 id="checkout-title">Confirmar pedido</h2>
+        <p class="dialog-copy">Dejanos estos datos para preparar tu pedido.</p>
+        <form id="checkout-form">
+          <label for="customer-name">Tu nombre <span aria-hidden="true">*</span></label>
+          <input id="customer-name" name="customer_name" required maxlength="100" autocomplete="name" placeholder="Ej. Martina" />
+          <label for="table-number">Mesa o modalidad</label>
+          <input id="table-number" name="table_number" maxlength="30" placeholder="Ej. Mesa 4 / Para llevar" />
+          <label for="order-notes">Notas del pedido</label>
+          <textarea id="order-notes" name="notes" maxlength="500" rows="3" placeholder="Alergias, indicaciones..."></textarea>
+          <button class="button button-primary" type="submit">Enviar pedido <span aria-hidden="true">→</span></button>
+          <p class="form-error" id="form-error" role="alert"></p>
+        </form>
+      </div>
+    </div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="script.js"></script>
+  </body>
+</html>
