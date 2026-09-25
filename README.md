@@ -1,6 +1,6 @@
 # Smach & Grill — menú digital
 
-Menú digital para Chile, con precios en pesos chilenos (CLP) y traducciones al español, portugués e inglés.
+Menú digital para Chile, con precios en pesos chilenos (CLP) y traducciones al español, portugués e inglés. El catálogo está enfocado en hamburguesas, combos, papas, bebidas y postres.
 
 Aplicación web de menú y pedidos con una base de datos SQLite real.
 
@@ -11,6 +11,20 @@ Desde esta carpeta:
 ```bash
 python3 server.py
 ```
+
+### Frontend Angular
+
+El menú público utiliza Angular y se entrega desde el mismo servidor Python para conservar la API y los QR existentes. El código fuente está en [angular-app](./angular-app). Para instalar dependencias y generar la versión que sirve el backend:
+
+```bash
+cd angular-app
+npm install
+npm run build
+cd ..
+python3 server.py
+```
+
+La compilación queda en `angular-app/dist/frontend/browser`. Si esa carpeta existe, `/` sirve automáticamente la aplicación Angular; `/admin` y `/qr` mantienen sus vistas operativas actuales.
 
 Después abrir [http://localhost:8000](http://localhost:8000) en la computadora.
 
@@ -63,6 +77,40 @@ La primera ejecución crea automáticamente `menu.db` con las categorías, produ
 - `GET /api/orders`: lista pedidos para cocina/administración.
 - `GET /api/orders/:id`: consulta un pedido con su detalle.
 - `PATCH /api/orders/:id`: actualiza el estado (`pending`, `confirmed`, `preparing`, `ready`, `delivered` o `cancelled`).
+
+El catálogo inicial incluye las categorías `Hamburguesas`, `Combos`, `Papas y acompañamientos`, `Bebidas` y `Postres`. Las imágenes de los productos se sirven desde `angular-app/public/products` y se identifican mediante el campo `image` de la respuesta de menú.
+
+## Panel del restaurante
+
+Abrir `/admin` para consultar pedidos, detalle de productos, mesas ocupadas, ventas con pago aprobado, estado de cada orden y minutos estimados restantes. El panel actualiza la información automáticamente cada 10 segundos y permite cambiar el estado de una orden.
+
+Después de enviar un pedido, el cliente recibe un seguimiento en vivo dentro del menú. La tarjeta de seguimiento consulta `/api/orders/:id` cada 10 segundos y muestra el estado (`Recibido`, `Confirmado`, `En preparación`, `Listo para retirar`), una barra de progreso y el tiempo aproximado restante. El tiempo inicial se calcula según la cantidad de productos, con un rango estimado de 15 a 55 minutos.
+
+El pago es una simulación local: una tarjeta de prueba terminada en `4242` se aprueba y una terminada en `0002` se rechaza. No se procesan cobros reales ni se almacenan datos completos de tarjetas.
+
+## Mesas y códigos QR
+
+El restaurante trabaja con seis mesas. Cada mesa tiene un QR diferente generado desde `/qr`:
+
+```text
+https://tu-dominio.com/qr
+```
+
+Cada QR abre una URL con una credencial de mesa (`mesa` + `token`). El cliente no elige ni escribe su mesa: el servidor valida la credencial y guarda automáticamente `Mesa 1` a `Mesa 6` en el pedido. La vista pública no lista pedidos de otras mesas.
+
+Después de crear un pedido, el servidor devuelve un token privado de seguimiento. El cliente usa ese token para consultar solo su pedido; intentar consultar otro pedido sin su token devuelve `403`.
+
+El flujo del cliente conserva el carrito por mesa en el navegador, muestra la mesa activa en el encabezado, presenta un resumen antes de enviar, evita envíos duplicados mientras procesa el pedido y recupera el seguimiento del último pedido de esa mesa si el cliente recarga la página.
+
+El panel permite filtrar por estado y mesa, ver el detalle de cada orden, consultar el tiempo restante o atraso y actualizar el estado operativo. La información se refresca automáticamente cada 10 segundos.
+
+En producción definir una clave privada para generar las credenciales:
+
+```text
+MENU_SECRET=una-clave-larga-y-secreta
+```
+
+Debe mantenerse igual mientras los QR estén impresos. Si cambia, hay que regenerar los seis QR.
 
 Ejemplo de creación:
 

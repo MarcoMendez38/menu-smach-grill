@@ -13,6 +13,8 @@
       .qr-card p { color: var(--muted); font-size: 14px; }
       .qr-image { background: white; border: 10px solid white; border-radius: 4px; display: block; height: 300px; margin: 25px auto; max-width: 100%; width: 300px; }
       .qr-url { background: var(--cream); border-radius: 4px; color: var(--deep-sage); display: block; font-size: 13px; overflow-wrap: anywhere; padding: 11px; }
+      .table-qr { border-top: 1px solid var(--line); margin-top: 25px; padding-top: 20px; }
+      .table-qr h2 { font-size: 24px; }
       .qr-help { font-size: 12px !important; margin-bottom: 25px; }
       @media print { .print-button { display: none; } body { background: white; } .qr-card { box-shadow: none; } }
     </style>
@@ -23,16 +25,18 @@
         <p class="eyebrow">Smach & Grill</p>
         <h1>Escaneá para ver el menú</h1>
         <p class="qr-help">Apuntá la cámara de tu celular al código para abrir el menú digital.</p>
-        <img class="qr-image" id="qr-image" alt="Código QR para abrir el menú de Smach y Grill" />
-        <code class="qr-url" id="qr-url"></code>
+        <div id="table-qrs"></div>
+        <p class="qr-help">Cada código corresponde a una mesa distinta. No compartas las URL entre mesas.</p>
         <button class="button button-primary print-button" type="button" onclick="window.print()">Imprimir QR</button>
       </div>
     </main>
     <script>
-      const menuUrl = `${window.location.origin}/`;
-      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=20&data=${encodeURIComponent(menuUrl)}`;
-      document.querySelector("#qr-image").src = qrUrl;
-      document.querySelector("#qr-url").textContent = menuUrl;
+      fetch("/api/tables").then(response => response.json()).then(({ tables }) => {
+        document.querySelector("#table-qrs").innerHTML = tables.map(table => {
+          const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=20&data=${encodeURIComponent(table.url)}`;
+          return `<section class="table-qr"><h2>Mesa ${table.number}</h2><img class="qr-image" src="${qrUrl}" alt="Código QR de la Mesa ${table.number}" /><code class="qr-url">${table.url}</code></section>`;
+        }).join("");
+      });
     </script>
   </body>
 </html>

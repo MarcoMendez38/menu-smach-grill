@@ -1,0 +1,24 @@
+<header class="topbar">
+  <a class="brand" href="/"><span class="logo">S<span>&</span>G</span><span>SMACH <b>&</b> GRILL</span></a>
+  <div class="top-actions"><span *ngIf="tableNumber" class="table-pill">MESA {{ tableNumber }}</span><button class="cart-button" (click)="cartOpen=true" aria-label="Abrir pedido">🛒 <strong>{{ itemCount }}</strong></button></div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="hero-copy"><p class="kicker">SMACH & GRILL · BURGER BAR</p><h1>El sabor<br><em>se hace fuego.</em></h1><p>Hamburguesas a la parrilla, ingredientes frescos y una experiencia hecha para disfrutar sin apuro.</p><a href="#menu" class="primary">Explorar menú <span>↓</span></a></div>
+    <div class="hero-art" role="img" aria-label="Hamburguesa de Smach & Grill"></div>
+  </section>
+
+  <section *ngIf="tracking" class="tracking" aria-live="polite"><div><small>PEDIDO EN CURSO</small><h2>Pedido #{{ tracking.id }}</h2><p>{{ trackingMessage() }}</p><div class="tracking-bar"><span [style.width.%]="trackingProgress()"></span></div></div><strong>{{ tracking.estimated_minutes || 15 }}<small> min aprox.</small></strong></section>
+
+  <section id="menu" class="menu-section">
+    <div class="section-head"><div><p class="kicker">PARA CADA ANTOJO</p><h2>Elegí tu favorito</h2></div><input [(ngModel)]="searchTerm" placeholder="Buscar en el menú..." aria-label="Buscar en el menú"></div>
+    <nav class="categories"><button *ngFor="let category of categories" [class.active]="activeCategory === category" (click)="activeCategory = category">{{ category }}</button></nav>
+    <p *ngIf="loading" class="message">Cargando el menú...</p><p *ngIf="error" class="message error">{{ error }}</p>
+    <div class="product-grid"><article *ngFor="let product of filteredProducts" class="product-card"><div class="product-visual"><img [src]="'/products/' + product.image + '.svg'" [alt]="product.name"><i *ngIf="product.vegetarian">VEG</i></div><div class="product-info"><p class="category">{{ product.category }}</p><h3>{{ product.name }}</h3><p>{{ product.description }}</p><div class="product-bottom"><strong>{{ formatPrice(product.price_cents) }}</strong><button (click)="add(product)">Agregar <span>+</span></button></div></div></article></div>
+  </section>
+</main>
+
+<div *ngIf="cartOpen" class="backdrop" (click)="cartOpen=false"></div><aside class="cart" [class.open]="cartOpen"><div class="cart-head"><div><small>TU SELECCIÓN</small><h2>Tu pedido</h2></div><button (click)="cartOpen=false">×</button></div><div class="cart-items"><p *ngIf="!cart.length" class="empty">Tu pedido está vacío.<br><small>Agrega algo rico para empezar.</small></p><div *ngFor="let item of cart" class="cart-item"><span>{{ item.product.emoji }}</span><div><b>{{ item.product.name }}</b><small>{{ formatPrice(item.product.price_cents) }}</small></div><div class="quantity"><button (click)="change(item,-1)">−</button>{{ item.quantity }}<button (click)="change(item,1)">+</button></div></div></div><footer *ngIf="cart.length"><div><span>Total</span><strong>{{ formatPrice(total) }}</strong></div><button class="primary wide" (click)="openCheckout()">Confirmar pedido →</button></footer></aside>
+
+<div *ngIf="checkoutOpen" class="modal-backdrop"><section class="modal"><button class="modal-close" (click)="checkoutOpen=false">×</button><p class="kicker">ÚLTIMO PASO</p><h2>Confirmar pedido</h2><p class="muted">Mesa {{ tableNumber }} · {{ itemCount }} productos · {{ formatPrice(total) }}</p><form (ngSubmit)="submitOrder()"><label>Tu nombre<input [(ngModel)]="customerName" name="name" required placeholder="Ej. Martina"></label><label>Notas del pedido<textarea [(ngModel)]="notes" name="notes" rows="3" placeholder="Alergias o indicaciones..."></textarea></label><label>Método de pago<select [(ngModel)]="paymentMethod" name="payment"><option value="cash">Efectivo en el local</option><option value="card">Tarjeta de prueba</option><option value="transfer">Transferencia de prueba</option></select></label><label *ngIf="paymentMethod === 'card'">Dato de prueba<input [(ngModel)]="paymentToken" name="token" inputmode="numeric" placeholder="Usa 4242 para aprobar"></label><p *ngIf="formError" class="form-error">{{ formError }}</p><button class="primary wide" type="submit">Enviar pedido →</button></form></section></div>

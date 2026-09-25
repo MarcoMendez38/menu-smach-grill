@@ -13,9 +13,22 @@ const toast = document.querySelector("#toast");
 const dialog = document.querySelector("#checkout-dialog");
 const form = document.querySelector("#checkout-form");
 const formError = document.querySelector("#form-error");
+const paymentMethod = document.querySelector("#payment-method");
+const paymentDetails = document.querySelector("#payment-details");
+const tracking = document.querySelector("#order-tracking");
+const tableBadge = document.querySelector("#table-badge");
+const checkoutSummary = document.querySelector("#checkout-summary");
+const submitButton = document.querySelector("#submit-order");
+let trackingTimer;
+const statusLabels = { pending: "Recibido", confirmed: "Confirmado", preparing: "En preparación", ready: "Listo para retirar", delivered: "Entregado", cancelled: "Cancelado" };
+const statusMessages = { pending: "Recibimos tu pedido y el restaurante lo revisará pronto.", confirmed: "Tu pedido fue confirmado y comenzará a prepararse.", preparing: "Tu hamburguesa está en la parrilla.", ready: "¡Tu pedido está listo!", delivered: "Gracias por elegir Smach & Grill.", cancelled: "Este pedido fue cancelado." };
 let dishes = [];
 let activeCategory = "Todos";
 let cart = [];
+const tableParams = new URLSearchParams(window.location.search);
+const tableNumber = tableParams.get("mesa");
+const tableToken = tableParams.get("token");
+const tableStorageKey = tableNumber ? `smach-cart-${tableNumber}` : "smach-cart";
 let language = "es";
 const translations = {
   es: { eyebrow: "Hamburguesas a la parrilla · Sabor sin vueltas", heroTitle: "Hamburguesas<br><span>que dejan huella.</span>", heroCopy: "Pan dorado, carne jugosa y combinaciones llenas de sabor. Elegí tu favorita y disfrutá.", viewMenu: "Ver el menú", chooseMoment: "Elegí tu momento", ourMenu: "Nuestro menú", search: "Buscar hamburguesa...", fresh: "Ingredientes frescos", freshSub: "Preparados todos los días", openToday: "Abierto hoy", options: "Opciones para todos", optionsSub: "Vegetarianas y sin TACC", footer: "Desarrollado por Jorge Paez, Patricio Chandia y Marco Mendez.", add: "+ Agregar", vegetarian: "Vegetariano", noResults: "No encontramos ese plato", tryAgain: "Probá con otro término o categoría.", total: "Total", checkout: "Confirmar pedido", checkoutNote: "Al confirmar, te contactaremos para coordinar el pago." },
@@ -28,9 +41,9 @@ const dishTranslations = {
 };
 const localizedDish = (dish, field) => (dishTranslations[language]?.[dish.id]?.[field === "name" ? 0 : 1] || dish[field]);
 const categoryTranslations = {
-  es: { "Para empezar": "Para empezar", Principales: "Principales", Ensaladas: "Ensaladas", "Dulce final": "Dulce final", Bebidas: "Bebidas" },
-  pt: { "Para empezar": "Para começar", Principales: "Pratos principais", Ensaladas: "Saladas", "Dulce final": "Sobremesas", Bebidas: "Bebidas" },
-  en: { "Para empezar": "Starters", Principales: "Mains", Ensaladas: "Salads", "Dulce final": "Desserts", Bebidas: "Drinks" },
+  es: { Hamburguesas: "Hamburguesas", Combos: "Combos", "Papas y acompañamientos": "Papas y acompañamientos", Bebidas: "Bebidas", Postres: "Postres" },
+  pt: { Hamburguesas: "Hambúrgueres", Combos: "Combos", "Papas y acompañamientos": "Batatas e acompanhamentos", Bebidas: "Bebidas", Postres: "Sobremesas" },
+  en: { Hamburguesas: "Burgers", Combos: "Combos", "Papas y acompañamientos": "Fries & sides", Bebidas: "Drinks", Postres: "Desserts" },
 };
 
 async function loadMenu() {
@@ -90,7 +103,7 @@ function renderDishes() {
   const t = translations[language];
   grid.innerHTML = visibleDishes.length ? visibleDishes.map(dish => `
     <article class="menu-card">
-      <div class="dish-image" aria-hidden="true">${dish.emoji}</div>
+      <div class="dish-image"><img src="/products/${dish.image}.svg" alt="${localizedDish(dish, "name")}"></div>
       <div class="dish-details">
         <div class="dish-title-row"><h3 class="dish-title">${localizedDish(dish, "name")}</h3><span class="dish-price">${formatPrice(dish.price_cents)}</span></div>
         <p class="dish-description">${localizedDish(dish, "description")}</p>
@@ -108,6 +121,7 @@ function addToCart(id) {
   if (existing) existing.quantity += 1;
   else cart.push({ product_id: id, quantity: 1 });
   updateCart();
+  persistCart();
   showToast("Agregado a tu pedido");
 }
 
@@ -120,6 +134,7 @@ function updateCart() {
     cartFooter.hidden = true;
     return;
   }
+
   cartContent.innerHTML = cart.map(item => {
     const dish = dishes.find(entry => entry.id === item.product_id);
     return `<div class="cart-item"><span class="cart-item-emoji" aria-hidden="true">${dish.emoji}</span><div class="cart-item-info"><strong>${dish.name}</strong><span>${formatPrice(dish.price_cents * item.quantity)}</span></div><div class="quantity"><button type="button" data-action="decrease" data-id="${dish.id}" aria-label="Quitar una porción de ${dish.name}">−</button><span aria-label="${item.quantity} unidades">${item.quantity}</span><button type="button" data-action="increase" data-id="${dish.id}" aria-label="Agregar una porción de ${dish.name}">+</button></div></div>`;
@@ -129,12 +144,17 @@ function updateCart() {
   cartContent.querySelectorAll("[data-action]").forEach(button => button.addEventListener("click", () => changeQuantity(Number(button.dataset.id), button.dataset.action)));
 }
 
+function persistCart() {
+  window.localStorage.setItem(tableStorageKey, JSON.stringify(cart));
+}
+
 function changeQuantity(id, action) {
   const item = cart.find(entry => entry.product_id === id);
   if (!item) return;
   item.quantity += action === "increase" ? 1 : -1;
   cart = cart.filter(entry => entry.quantity > 0);
   updateCart();
+  persistCart();
 }
 
 function toggleCart(open) {
@@ -151,8 +171,36 @@ function showToast(message) {
   setTimeout(() => toast.classList.remove("show"), 2500);
 }
 
+async function refreshTracking(orderId) {
+  const response = await fetch(`/api/orders/${orderId}?access=${encodeURIComponent(window.localStorage.getItem(`order-access-${orderId}`) || "")}`);
+  if (!response.ok) return;
+  const data = await response.json();
+  const order = data.order;
+  const elapsed = Math.floor((Date.now() - new Date(order.created_at).getTime()) / 60000);
+  const remaining = Math.max(0, (order.estimated_minutes || 20) - elapsed);
+  const progress = order.status === "ready" || order.status === "delivered" ? 100 : order.status === "preparing" ? 65 : order.status === "confirmed" ? 35 : 12;
+  document.querySelector("#tracking-id").textContent = order.id;
+  document.querySelector("#tracking-message").textContent = `${statusLabels[order.status]} · ${statusMessages[order.status]}`;
+  document.querySelector("#tracking-time").textContent = ["ready", "delivered", "cancelled"].includes(order.status) ? "—" : remaining;
+  document.querySelector("#tracking-progress").style.width = `${progress}%`;
+}
+
+function startTracking(orderId) {
+  clearInterval(trackingTimer);
+  tracking.hidden = false;
+  refreshTracking(orderId);
+  trackingTimer = setInterval(() => refreshTracking(orderId), 10000);
+  tracking.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 function openCheckout() {
   if (!cart.length) return;
+  if (!tableNumber || !tableToken) {
+    showToast("Este menú debe abrirse desde el QR de una mesa");
+    return;
+  }
+  document.querySelector("#table-context").textContent = `Pedido para Mesa ${tableNumber}`;
+  checkoutSummary.innerHTML = `${cart.reduce((sum, item) => sum + item.quantity, 0)} productos seleccionados<strong>${cartTotal.textContent}</strong>`;
   dialog.hidden = false;
   document.querySelector("#customer-name").focus();
 }
@@ -160,7 +208,11 @@ function openCheckout() {
 async function submitOrder(event) {
   event.preventDefault();
   formError.textContent = "";
+  submitButton.disabled = true;
+  submitButton.textContent = "Procesando pedido...";
   const data = Object.fromEntries(new FormData(form));
+  data.table_number = tableNumber;
+  data.table_token = tableToken;
   try {
     const response = await fetch("/api/orders", {
       method: "POST",
@@ -170,13 +222,20 @@ async function submitOrder(event) {
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || "No se pudo guardar el pedido");
     cart = [];
+    persistCart();
     form.reset();
     updateCart();
     dialog.hidden = true;
     toggleCart(false);
+    window.localStorage.setItem(`order-access-${result.order_id}`, result.access_token);
+    window.localStorage.setItem(`smach-last-order-${tableNumber}`, String(result.order_id));
+    startTracking(result.order_id);
     showToast(`Pedido #${result.order_id} recibido correctamente`);
   } catch (error) {
     formError.textContent = error.message;
+  } finally {
+    submitButton.disabled = false;
+    submitButton.innerHTML = 'Enviar pedido <span aria-hidden="true">→</span>';
   }
 }
 
@@ -188,6 +247,12 @@ overlay.addEventListener("click", () => toggleCart(false));
 document.querySelector("#checkout").addEventListener("click", openCheckout);
 document.querySelector("#close-dialog").addEventListener("click", () => { dialog.hidden = true; });
 form.addEventListener("submit", submitOrder);
+paymentMethod.addEventListener("change", () => {
+  const needsDetails = paymentMethod.value !== "cash";
+  paymentDetails.hidden = !needsDetails;
+  document.querySelector("#payment-token").required = needsDetails;
+  document.querySelector("#payment-token").placeholder = paymentMethod.value === "card" ? "Usá 4242 para aprobar" : "Ej. TRANSFERENCIA-001";
+});
 document.addEventListener("keydown", event => {
   if (event.key === "Escape") {
     if (!dialog.hidden) dialog.hidden = true;
@@ -195,4 +260,15 @@ document.addEventListener("keydown", event => {
   }
 });
 updateCart();
+if (tableNumber && tableToken) {
+  tableBadge.textContent = `Mesa ${tableNumber}`;
+  tableBadge.hidden = false;
+  try { cart = JSON.parse(window.localStorage.getItem(tableStorageKey) || "[]"); } catch { cart = []; }
+  const savedOrder = window.localStorage.getItem(`smach-last-order-${tableNumber}`);
+  if (savedOrder && window.localStorage.getItem(`order-access-${savedOrder}`)) {
+    const orderId = savedOrder;
+    startTracking(orderId);
+  }
+  updateCart();
+}
 loadMenu();

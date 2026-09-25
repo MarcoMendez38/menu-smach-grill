@@ -15,10 +15,11 @@
     <header class="site-header">
       <div class="container header-inner">
         <a class="brand" href="#" aria-label="Smach y Grill, inicio">
-          <span class="brand-mark" aria-hidden="true">B<span>&</span>M</span>
+          <span class="brand-mark" aria-hidden="true">S<span>&</span>G</span>
           <span class="brand-name">Smach <em>&</em> Grill</span>
         </a>
         <div class="header-actions">
+          <span class="table-badge" id="table-badge" hidden></span>
           <button class="icon-button" type="button" id="open-cart" aria-label="Abrir pedido" aria-controls="cart-panel">
             <span aria-hidden="true">🛒</span>
             <span class="cart-count" id="cart-count">0</span>
@@ -46,6 +47,13 @@
           <div class="leaf leaf-two"></div>
           <div class="plate"><span></span></div>
         </div>
+      </section>
+      <section class="order-tracking container" id="order-tracking" hidden aria-live="polite" aria-labelledby="tracking-title">
+        <div class="tracking-card">
+          <div><p class="eyebrow">Seguimiento en vivo</p><h2 id="tracking-title">Pedido #<span id="tracking-id"></span></h2><p id="tracking-message"></p></div>
+          <div class="tracking-time"><strong id="tracking-time">--</strong><span>minutos aprox.</span></div>
+        </div>
+        <div class="tracking-progress"><span id="tracking-progress"></span></div>
       </section>
 
       <section class="menu-section container" id="menu" aria-labelledby="menu-title">
@@ -91,15 +99,26 @@
       <div class="dialog-card" role="dialog" aria-modal="true" aria-labelledby="checkout-title">
         <button class="close-button dialog-close" id="close-dialog" type="button" aria-label="Cerrar formulario">×</button>
         <p class="eyebrow">Último paso</p><h2 id="checkout-title">Confirmar pedido</h2>
-        <p class="dialog-copy">Dejanos estos datos para preparar tu pedido.</p>
+        <p class="dialog-copy">Dejanos tus datos y elegí un medio de pago simulado.</p>
+        <div class="checkout-summary" id="checkout-summary"></div>
         <form id="checkout-form">
           <label for="customer-name">Tu nombre <span aria-hidden="true">*</span></label>
           <input id="customer-name" name="customer_name" required maxlength="100" autocomplete="name" placeholder="Ej. Martina" />
-          <label for="table-number">Mesa o modalidad</label>
-          <input id="table-number" name="table_number" maxlength="30" placeholder="Ej. Mesa 4 / Para llevar" />
+          <p class="table-context" id="table-context"></p>
           <label for="order-notes">Notas del pedido</label>
           <textarea id="order-notes" name="notes" maxlength="500" rows="3" placeholder="Alergias, indicaciones..."></textarea>
-          <button class="button button-primary" type="submit">Enviar pedido <span aria-hidden="true">→</span></button>
+          <label for="payment-method">Método de pago</label>
+          <select id="payment-method" name="payment_method">
+            <option value="cash">Efectivo en el local</option>
+            <option value="card">Tarjeta de prueba</option>
+            <option value="transfer">Transferencia de prueba</option>
+          </select>
+          <div id="payment-details" class="payment-details" hidden>
+            <label for="payment-token">Dato de prueba</label>
+            <input id="payment-token" name="payment_token" inputmode="numeric" autocomplete="off" placeholder="Usá 4242 para aprobar" />
+            <p class="payment-help">Simulación: tarjeta terminada en <strong>4242</strong> aprobada; terminada en <strong>0002</strong> rechazada.</p>
+          </div>
+          <button class="button button-primary" id="submit-order" type="submit">Enviar pedido <span aria-hidden="true">→</span></button>
           <p class="form-error" id="form-error" role="alert"></p>
         </form>
       </div>
