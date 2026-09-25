@@ -366,7 +366,7 @@ class Handler(BaseHTTPRequestHandler):
 if __name__ == "__main__":
     init_db()
     host = os.environ.get("MENU_HOST", "0.0.0.0")
-    port = int(os.environ.get("MENU_PORT", "8000"))
+    port = int(os.environ.get("PORT", os.environ.get("MENU_PORT", "8000")))
     server = ThreadingHTTPServer((host, port), Handler)
     print(f"Menú disponible en http://localhost:{port}")
     print("Para celulares en la misma red, usar la IP local de esta computadora, por ejemplo:")
